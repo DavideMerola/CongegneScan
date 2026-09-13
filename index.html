@@ -2403,43 +2403,6 @@ function analizzaTestoScanner(testo) {
         resultUI.classList.remove("translate-y-full");
       }
 
-        // Mostra la UI dei risultati
-        const resultUI = document.getElementById("scannerResultUI");
-        const btnAdd = document.getElementById("btnAggiungiScanner");
-
-        if (stradaTrovata && civicoTrovato) {
-          datiScannerTemp = {
-            zona: zonaTrovata,
-            strada: stradaTrovata,
-            civico: civicoTrovato,
-            pezzi: 1,
-          };
-
-          document.getElementById("scannedZona").innerText =
-            zonaTrovata.toUpperCase();
-          document.getElementById("scannedZona").className =
-            "text-green-600 font-extrabold text-sm mb-1";
-          document.getElementById("scannedAddress").innerText =
-            `${stradaTrovata} - Civ. ${civicoTrovato}`;
-
-          btnAdd.disabled = false;
-          btnAdd.classList.remove("opacity-50");
-        } else {
-          datiScannerTemp = null;
-          document.getElementById("scannedZona").innerText =
-            "INDIRIZZO NON RICONOSCIUTO";
-          document.getElementById("scannedZona").className =
-            "text-red-600 font-extrabold text-sm mb-1";
-          document.getElementById("scannedAddress").innerText =
-            "Riprova o inserisci a mano";
-
-          btnAdd.disabled = true;
-          btnAdd.classList.add("opacity-50");
-        }
-
-        resultUI.classList.remove("translate-y-full");
-      }
-
       function riprovaScansione() {
         datiScannerTemp = null;
         document
