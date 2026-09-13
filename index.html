@@ -2291,88 +2291,60 @@
       }
 
 function analizzaTestoScanner(testo) {
-        console.log("Testo grezzo OCR:\n", testo); // Utile per il debug in console
+        console.log("Testo grezzo OCR:\n", testo);
 
         // 1. Normalizziamo il testo: tutto maiuscolo e sostituiamo i ritorni a capo con spazi
         let testoPulito = testo.toUpperCase().replace(/\n/g, ' ');
-        // Sostituiamo caratteri "sporchi" che l'OCR potrebbe confondere
-        testoPulito = testoPulito.replace(/[^A-Z0-9\s\/\-]/g, ' '); 
+        
+        // Manteniamo solo lettere, numeri, spazi e i simboli comuni nei civici (/ e - e virgole)
+        testoPulito = testoPulito.replace(/[^A-Z0-9\s\/\-\,]/g, ' '); 
 
         let stradaTrovata = null;
         let zonaTrovata = null;
         let civicoTrovato = null;
         
-        // Pattern Regex per catturare i civici tipici del tuo masterRoute
-        // Cerca: numeri + opzionalmente lettere (es. 2C, 122E, 34ABC) 
-        // Oppure: numeri/numeri (es. 93/91)
-        const regexCivicoPattern = /((?:\d+[A-Z]*)|(?:\d+\/\d+))/g;
-
         // 2. Cerchiamo la strada
         for (let s of tutteLeStradeMaster) {
-            // Rimuoviamo prefissi comuni per cercare solo la parola chiave
-            // Es. da "Via Antonio Buzzola" cercheremo "BUZZOLA"
-            // Da "Via Borgo Pezzana" cercheremo "BORGO PEZZANA" (o gestibile in due parti)
+            // Rimuoviamo "VIA", "VIALE", ecc. per cercare solo il cuore del nome (es. "BUZZOLA")
             let parolaChiaveStrada = s.puro.replace(/^(VIA|VIALE|PIAZZA|PIAZZETTA|PZZALE|BORGO)\s+/i, '').trim();
             
-            // Creiamo un'espressione regolare per la parola chiave. \b garantisce che sia una parola intera.
+            // Regex per cercare la parola intera
             const regexVia = new RegExp(`\\b${parolaChiaveStrada}\\b`);
             
             if (regexVia.test(testoPulito)) {
                 stradaTrovata = s.originale; 
                 zonaTrovata = s.zona;
                 
-                // 3. Estrazione del civico "intelligente"
-                // Troviamo l'indice di dove inizia la strada nel testo estratto
+                // 3. ESTRAZIONE DIRETTA DEL CIVICO ALLA DESTRA DELLA VIA
+                // Troviamo il punto in cui inizia la via nel testo
                 const indexInizioVia = testoPulito.search(regexVia);
                 
-                // Estraiamo un blocco di testo DOPO la via (fino a 50 caratteri successivi)
-                // Questo ci dà un margine per cercare il civico, ignorando il testo precedente (es. il nome "Donato")
-                const testoDopoVia = testoPulito.substring(indexInizioVia + parolaChiaveStrada.length, indexInizioVia + parolaChiaveStrada.length + 50);
+                // Ritagliamo tutto il testo che si trova FISICAMENTE DOPO il nome della via
+                const testoDopoVia = testoPulito.substring(indexInizioVia + parolaChiaveStrada.length);
                 
-                console.log(`Trovata strada: ${stradaTrovata}. Cerco civico in: "${testoDopoVia}"`);
+                console.log(`Via Trovata: ${stradaTrovata}. Cerco civico in: "${testoDopoVia.substring(0, 30)}..."`);
 
-                // Cerchiamo tutti i potenziali civici in questo frammento
-                let match;
-                let possibiliCivici = [];
-                while ((match = regexCivicoPattern.exec(testoDopoVia)) !== null) {
-                    possibiliCivici.push(match[0]);
-                }
+                // REGOLA D'ORO: 
+                // ^[^\d]* -> Ignora qualsiasi spazio, virgola o testo (es. " N. ") finché non trovi un numero
+                // (\d+[A-Z0-9\/\-]*) -> Cattura il numero e qualsiasi lettera/sbarra attaccata (es. "2C", "15/B")
+                const matchCivico = testoDopoVia.match(/^[^\d]*(\d+[A-Z0-9\/\-]*)/);
 
-                if (possibiliCivici.length > 0) {
-                     // Spesso il civico è il *primo* numero utile dopo la via.
-                     // Proviamo a vedere se il primo numero trovato corrisponde a uno dei civici previsti per questa strada
-                     
-                     // Recuperiamo i civici validi per questa strada dal masterRoute
-                     const bloccoStradaMaster = masterRoute[zonaTrovata].find(b => b.street.toUpperCase() === s.originale);
-                     const civiciValidiUpper = bloccoStradaMaster ? bloccoStradaMaster.civici.map(c => c.toUpperCase()) : [];
-
-                     // Proviamo a incrociare i civici letti dall'OCR con i civici previsti
-                     for(let civicoLetto of possibiliCivici){
-                        if(civiciValidiUpper.includes(civicoLetto)){
-                           civicoTrovato = civicoLetto;
-                           console.log(`Civico verificato: ${civicoTrovato}`);
-                           break; // Trovato!
-                        }
-                     }
-
-                     // Se non abbiamo trovato una corrispondenza esatta, prendiamo il primo numero che assomiglia a un civico.
-                     // L'utente potrebbe doverlo correggere in un secondo momento, oppure verrà segnato come "Fuori Rotta".
-                     if(!civicoTrovato){
-                         civicoTrovato = possibiliCivici[0];
-                         console.log(`Civico non in lista, forzato: ${civicoTrovato}`);
-                     }
+                if (matchCivico && matchCivico[1]) {
+                    civicoTrovato = matchCivico[1]; // Prende esattamente quello che ha letto la fotocamera
+                    console.log(`Civico catturato con successo: ${civicoTrovato}`);
                 }
                 
-                // Abbiamo trovato la strada e (probabilmente) il civico, usciamo dal ciclo
-                break;
+                // Usciamo dal ciclo: abbiamo trovato via e civico
+                break; 
             }
         }
 
-        // 4. Aggiorniamo l'interfaccia utente (resta uguale a prima)
+        // 4. Aggiorniamo l'interfaccia utente
         const resultUI = document.getElementById("scannerResultUI");
         const btnAdd = document.getElementById("btnAggiungiScanner");
         
         if (stradaTrovata && civicoTrovato) {
+            // Salvataggio nei dati temporanei
             datiScannerTemp = { zona: zonaTrovata, strada: stradaTrovata, civico: civicoTrovato, pezzi: 1 };
             
             document.getElementById("scannedZona").innerText = zonaTrovata.toUpperCase();
@@ -2382,7 +2354,7 @@ function analizzaTestoScanner(testo) {
             btnAdd.disabled = false;
             btnAdd.classList.remove("opacity-50");
         } else if (stradaTrovata && !civicoTrovato) {
-            // Caso in cui trova la via ma fallisce miseramente sul civico
+            // Se la fotocamera ha visto la strada ma non ha trovato NESSUN numero a destra
             datiScannerTemp = null;
             document.getElementById("scannedZona").innerText = `Trovata ${zonaTrovata.toUpperCase()}, ma manca il civico`;
             document.getElementById("scannedZona").className = "text-orange-500 font-extrabold text-sm mb-1";
@@ -2391,6 +2363,7 @@ function analizzaTestoScanner(testo) {
             btnAdd.disabled = true;
             btnAdd.classList.add("opacity-50");
         } else {
+            // Se l'etichetta è illeggibile
             datiScannerTemp = null;
             document.getElementById("scannedZona").innerText = "INDIRIZZO NON RICONOSCIUTO";
             document.getElementById("scannedZona").className = "text-red-600 font-extrabold text-sm mb-1";
@@ -2400,9 +2373,9 @@ function analizzaTestoScanner(testo) {
             btnAdd.classList.add("opacity-50");
         }
 
+        // Fai salire il popup con i risultati
         resultUI.classList.remove("translate-y-full");
       }
-
       function riprovaScansione() {
         datiScannerTemp = null;
         document
