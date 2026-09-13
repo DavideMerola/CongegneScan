@@ -1,0 +1,2620 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Consegne WatchSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AGGIUNTO: Tesseract.js per la lettura del testo tramite fotocamera -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f3f4f6;
+        -webkit-tap-highlight-color: transparent;
+      }
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+      /* Stile per l'area di scansione (mirino) */
+      .scanner-target {
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body class="text-slate-800 pb-24">
+    <!-- Sidebar Overlay -->
+    <div
+      id="sidebarOverlay"
+      onclick="chiudiMenu()"
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"
+    ></div>
+
+    <!-- Sidebar Menu -->
+    <div
+      id="sidebar"
+      class="fixed top-0 left-0 w-72 h-full bg-white z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col"
+    >
+      <div
+        class="bg-blue-600 text-white p-5 flex justify-between items-center shadow-md"
+      >
+        <h2 class="text-xl font-extrabold tracking-tight">Impostazioni</h2>
+        <button
+          onclick="chiudiMenu()"
+          class="text-blue-100 hover:text-white p-1 rounded-lg transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 flex-grow flex flex-col space-y-6">
+        <div>
+          <label
+            class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider"
+            >Zona di Lavoro</label
+          >
+          <select
+            id="zona"
+            onchange="cambioZona()"
+            class="w-full bg-slate-100 border-2 border-slate-200 rounded-xl p-4 font-bold text-lg text-slate-800 focus:border-blue-500 focus:ring-0 appearance-none"
+          >
+            <option value="Zona A">Zona A</option>
+            <option value="Zona B">Zona B</option>
+            <option value="Zona 24A">Zona 24A</option>
+            <option value="Zona 24B">Zona 24B</option>
+          </select>
+        </div>
+
+        <!-- AGGIUNTO: Tasto per lo Scanner nel Menu -->
+        <div class="pt-2 border-t border-slate-100">
+          <button
+            onclick="apriScanner()"
+            class="w-full bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 text-indigo-700 font-bold text-lg p-4 rounded-xl transition-transform transform active:scale-95 flex justify-center items-center gap-2 border border-indigo-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            Scansiona Etichetta
+          </button>
+          <p class="text-center text-slate-400 text-xs mt-2 font-medium">
+            Usa la fotocamera per leggere la via
+          </p>
+        </div>
+
+        <div class="mt-auto border-t border-slate-100 pt-6">
+          <button
+            onclick="pulisciLista()"
+            class="w-full bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 font-bold text-lg p-4 rounded-xl transition-transform transform active:scale-95 flex justify-center items-center gap-2 border border-red-200"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Nuovo Giorno
+          </button>
+          <p class="text-center text-slate-400 text-xs mt-3 font-medium">
+            Azzera la lista e ricomincia
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <header
+      class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-10 flex items-center gap-4"
+    >
+      <button
+        onclick="apriMenu()"
+        class="p-2 -ml-2 bg-blue-700 hover:bg-blue-800 rounded-xl shadow-inner transition active:scale-95"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-7 w-7"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight">ConsegneApp</h1>
+        <p
+          id="header-zona-text"
+          class="text-xs text-blue-200 font-medium tracking-wide"
+        >
+          Zona A
+        </p>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-4 max-w-md mx-auto space-y-6">
+      <!-- Input Card -->
+      <div
+        class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-4"
+      >
+        <div>
+          <label
+            class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider"
+            >Seleziona Strada</label
+          >
+          <select
+            id="strada"
+            class="w-full bg-slate-100 border-none rounded-xl p-4 font-bold text-lg text-slate-700 focus:ring-2 focus:ring-blue-500 appearance-none"
+          >
+            <!-- Popolato da JS in ordine alfabetico -->
+          </select>
+        </div>
+
+        <div class="flex space-x-3">
+          <div class="w-2/3">
+            <label
+              class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider"
+              >Civico</label
+            >
+            <input
+              type="text"
+              id="civico"
+              placeholder="Es. 3E"
+              class="w-full bg-slate-100 border-none rounded-xl p-4 font-bold text-xl text-slate-800 placeholder-slate-400 uppercase focus:ring-2 focus:ring-blue-500"
+              autocomplete="off"
+            />
+          </div>
+          <div class="w-1/3">
+            <label
+              class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider"
+              >Pezzi</label
+            >
+            <input
+              type="number"
+              id="pezzi"
+              value="1"
+              min="1"
+              class="w-full bg-slate-100 border-none rounded-xl p-4 font-bold text-xl text-slate-800 focus:ring-2 focus:ring-blue-500 text-center"
+            />
+          </div>
+        </div>
+
+        <button
+          onclick="aggiungiPaccoDaForm()"
+          class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xl p-4 rounded-xl shadow-lg transition-transform transform active:scale-95 flex justify-center items-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-7 w-7"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Aggiungi al Giro
+        </button>
+      </div>
+
+      <!-- List Card -->
+      <div>
+        <h2
+          class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 px-2 flex justify-between items-end"
+        >
+          <span>Riepilogo Giro Ordinato</span>
+          <span
+            id="contatore-totale"
+            class="bg-blue-100 text-blue-800 text-xs py-1 px-2 rounded-lg"
+            >0 pacchi totali</span
+          >
+        </h2>
+        <div id="lista-consegne" class="space-y-2">
+          <div class="text-center text-slate-400 py-8 text-sm italic">
+            Nessun pacco inserito.<br />Inizia ad aggiungere civici!
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Fixed Bottom Action Button -->
+    <div
+      class="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-white via-white to-transparent pb-6 z-20"
+    >
+      <button
+        onclick="generaImmagineWatch()"
+        class="w-full max-w-md mx-auto block bg-slate-900 hover:bg-black active:bg-slate-800 text-white font-bold text-lg p-4 rounded-2xl shadow-xl transition-transform transform active:scale-95 flex justify-center items-center gap-2 border-2 border-slate-700"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 text-green-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+          />
+        </svg>
+        Genera Foto Apple Watch
+      </button>
+    </div>
+
+    <!-- AGGIUNTO: Modale Scanner Fotocamera -->
+    <div
+      id="cameraModal"
+      class="fixed inset-0 bg-black z-50 hidden flex-col transition-opacity duration-300 opacity-0"
+    >
+      <!-- Area Video -->
+      <div
+        class="relative flex-grow flex items-center justify-center overflow-hidden"
+      >
+        <video
+          id="videoStream"
+          class="absolute w-full h-full object-cover"
+          autoplay
+          playsinline
+        ></video>
+
+        <!-- Mirino visivo -->
+        <div
+          class="relative w-4/5 h-48 border-2 border-green-400 rounded-xl scanner-target z-10 flex flex-col items-center justify-center"
+        >
+          <div
+            class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-green-400"
+          ></div>
+          <div
+            class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-green-400"
+          ></div>
+          <div
+            class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-green-400"
+          ></div>
+          <div
+            class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-green-400"
+          ></div>
+          <p
+            class="text-white text-sm font-bold bg-black/50 px-3 py-1 rounded-full mt-auto mb-2"
+          >
+            Inquadra l'indirizzo qui
+          </p>
+        </div>
+
+        <canvas id="canvasCapture" class="hidden"></canvas>
+
+        <!-- Overlay Caricamento -->
+        <div
+          id="scannerLoading"
+          class="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center hidden"
+        >
+          <div
+            class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500 mb-4"
+          ></div>
+          <p class="text-white font-bold text-lg" id="scannerStatusText">
+            Analisi etichetta...
+          </p>
+        </div>
+      </div>
+
+      <!-- Risultato Scansione -->
+      <div
+        id="scannerResultUI"
+        class="bg-white rounded-t-3xl p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-30 transform translate-y-full transition-transform duration-300 absolute bottom-0 w-full"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide">
+              Indirizzo Rilevato
+            </p>
+            <h3
+              id="scannedZona"
+              class="text-indigo-600 font-extrabold text-sm mb-1"
+            >
+              Zona Sconosciuta
+            </h3>
+            <h2
+              id="scannedAddress"
+              class="text-2xl font-black text-slate-800 leading-tight"
+            >
+              Nessun dato
+            </h2>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            onclick="riprovaScansione()"
+            class="w-1/3 bg-slate-100 text-slate-700 font-bold py-4 rounded-xl border border-slate-200 active:bg-slate-200"
+          >
+            Riprova
+          </button>
+          <button
+            id="btnAggiungiScanner"
+            onclick="confermaAggiuntaScanner()"
+            class="w-2/3 bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg active:bg-indigo-700 flex justify-center items-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Aggiungi al Giro
+          </button>
+        </div>
+      </div>
+
+      <!-- Controlli Fotocamera in basso -->
+      <div
+        id="cameraControls"
+        class="bg-black p-6 pb-12 flex justify-between items-center z-10 w-full absolute bottom-0"
+      >
+        <button
+          onclick="chiudiScanner()"
+          class="text-white font-medium px-4 py-2 bg-slate-800 rounded-full"
+        >
+          Annulla
+        </button>
+        <button
+          onclick="scattaFoto()"
+          class="w-20 h-20 bg-white rounded-full border-4 border-slate-300 active:scale-95 transition-transform flex items-center justify-center"
+        >
+          <div
+            class="w-16 h-16 bg-white rounded-full border border-gray-200"
+          ></div>
+        </button>
+        <div class="w-[84px]"></div>
+        <!-- Spazio bilanciamento -->
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div
+      id="alertModal"
+      class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300"
+    >
+      <div
+        class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300"
+        id="alertBox"
+      >
+        <h3 class="text-center text-xl font-bold text-slate-800 mb-2">
+          Attenzione
+        </h3>
+        <p
+          id="alertMessage"
+          class="text-center text-slate-600 mb-6 font-medium"
+        >
+          Messaggio d'errore qui.
+        </p>
+        <button
+          onclick="chiudiAlert()"
+          class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl"
+        >
+          Ho capito
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="watchModal"
+      class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex flex-col items-center justify-center p-4 opacity-0 transition-opacity duration-300"
+    >
+      <div class="text-center text-white mb-4 max-w-xs">
+        <h3 class="text-2xl font-bold mb-1 text-green-400">
+          Pronto per il Watch!
+        </h3>
+        <p class="text-sm text-slate-300 font-medium leading-tight">
+          Tieni premuto a lungo sull'immagine qui sotto e seleziona
+          <strong>"Salva in Foto"</strong>.
+        </p>
+      </div>
+      <div
+        class="relative rounded-[32px] p-2 bg-slate-800 shadow-[0_0_30px_rgba(74,222,128,0.2)] border border-slate-700 flex justify-center overflow-hidden"
+      >
+        <img
+          id="watchResultImg"
+          src=""
+          alt="Schermata Watch"
+          class="rounded-[24px] w-[200px] max-h-[55vh] object-contain block"
+        />
+      </div>
+      <button
+        onclick="chiudiWatchModal()"
+        class="mt-8 bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold py-3 px-8 rounded-full backdrop-blur-sm transition"
+      >
+        Chiudi Schermata
+      </button>
+    </div>
+
+    <script>
+      // --- DATI MAESTRI DEL PERCORSO ---
+      // (Il tuo oggetto masterRoute rimane inalterato)
+      const masterRoute = {
+        "Zona B": [
+          { street: "Castellana", civici: ["26"] },
+          {
+            street: "Hayez",
+            civici: ["32", "17a", "17", "15", "13", "11", "9", "7", "5", "3"],
+          },
+          { street: "Caravaglio", civici: ["42", "40"] },
+          {
+            street: "Hayez",
+            civici: ["4p", "4g", "4b", "4a", "17b", "17c", "19", "21"],
+          },
+          { street: "Caravaglio", civici: ["11", "9", "7", "5a", "5", "3"] },
+          {
+            street: "Castellana",
+            civici: [
+              "26a",
+              "28",
+              "30",
+              "30a",
+              "30b",
+              "67",
+              "65h",
+              "65g",
+              "65f",
+              "65e",
+              "65d",
+              "65c",
+              "65b",
+              "65a",
+              "65",
+            ],
+          },
+          {
+            street: "Guardi",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "21",
+              "19",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["63n", "34", "34b", "34c", "34d"] },
+          {
+            street: "Bellotto",
+            civici: [
+              "2",
+              "2a",
+              "2b",
+              "2c",
+              "4",
+              "4a",
+              "4b",
+              "6",
+              "8",
+              "8a",
+              "8b",
+              "8c",
+              "10",
+              "12",
+              "12a",
+              "12b",
+              "12c",
+              "14",
+              "14a",
+              "14b",
+              "16",
+              "16a",
+              "18",
+              "18a",
+              "18b",
+              "18c",
+              "18d",
+              "20",
+              "22",
+              "30",
+              "32",
+              "5",
+              "3",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: ["40", "23", "44", "46", "48", "48a", "50", "52", "56"],
+          },
+          {
+            street: "Pittoni",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "10a",
+              "21",
+              "19",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: ["58", "58a", "58b", "58g", "58h", "58d"],
+          },
+          {
+            street: "Giambellino",
+            civici: [
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1a",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["93b"] },
+          {
+            street: "Marzenego",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "3",
+              "1",
+            ],
+          },
+          {
+            street: "Molino Ronchin",
+            civici: [
+              "2",
+              "2a",
+              "2b",
+              "2c",
+              "2d",
+              "4",
+              "6",
+              "8",
+              "10",
+              "10a",
+              "10b",
+              "10c",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: [
+              "93a",
+              "93",
+              "87p",
+              "87a",
+              "87",
+              "85",
+              "83a",
+              "83",
+              "81",
+              "79",
+              "77",
+              "75",
+              "71",
+              "69a",
+              "69",
+              "32",
+            ],
+          },
+          {
+            street: "Ricci",
+            civici: ["19", "17", "15", "13", "11", "9", "7", "5", "1"],
+          },
+          { street: "Castellana", civici: ["32a", "32b", "32c"] },
+          {
+            street: "Piranesi",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "26",
+              "27",
+              "25",
+              "23",
+              "21",
+              "19",
+              "17a",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+              "2",
+            ],
+          },
+          {
+            street: "Piazzetta",
+            civici: [
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "29",
+              "27",
+              "25b",
+              "25a",
+              "25",
+              "23",
+              "21",
+              "19",
+              "17",
+              "15",
+              "13a",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: [
+              "63i",
+              "63l",
+              "63b",
+              "63d",
+              "63e",
+              "63f",
+              "63g",
+              "63h",
+              "63",
+              "61u",
+              "61t",
+              "61s",
+              "61r",
+              "61q",
+              "61p",
+              "61n",
+              "61m",
+              "61l",
+              "61h",
+              "61i",
+              "61g",
+              "61e",
+              "61f",
+              "61b",
+              "61a",
+              "61",
+              "59c",
+              "59",
+              "57",
+              "55",
+              "53",
+              "51",
+              "49",
+              "47",
+              "45",
+              "43",
+              "41",
+              "39",
+              "37",
+              "35b",
+              "35a",
+              "35",
+              "33",
+              "31",
+              "29",
+              "27d",
+              "27c",
+              "27b",
+              "27a",
+              "27",
+              "25m",
+              "25l",
+              "25i",
+              "25h",
+              "25g",
+              "25f",
+            ],
+          },
+          {
+            street: "Gaggian",
+            civici: [
+              "10",
+              "12",
+              "14",
+              "14a",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: [
+              "25e",
+              "25d",
+              "25c",
+              "25b",
+              "25a",
+              "25",
+              "23l",
+              "23h",
+              "23g",
+            ],
+          },
+          {
+            street: "Cima",
+            civici: [
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "19",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["23c", "23b", "23"] },
+          {
+            street: "Pordenone",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "27",
+              "25",
+              "23",
+              "21a",
+              "21",
+              "19",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1a",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["21a"] },
+          {
+            street: "Buzzola",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "30",
+              "31",
+              "29",
+              "27",
+              "25",
+              "23",
+              "21",
+              "19",
+              "17",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["21", "19", "17c", "17b"] },
+          {
+            street: "Giorgione",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          { street: "Castellana", civici: ["17a", "17", "15", "13"] },
+        ],
+        "Zona A": [
+          {
+            street: "Castellana",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "8a",
+              "8c",
+              "10",
+              "10a",
+              "12",
+              "11b",
+              "11a",
+              "11",
+              "9",
+              "7",
+              "5b",
+              "5a",
+              "5",
+              "3",
+              "1",
+              "14",
+              "16",
+              "16a",
+              "16b",
+              "16c",
+              "16e",
+              "16g",
+              "16h",
+              "16m",
+              "18",
+              "20",
+              "20a",
+              "20b",
+              "20c",
+              "20d",
+            ],
+          },
+          { street: "Nono", civici: ["2", "4", "6", "7", "5", "3", "1"] },
+          { street: "Castellana", civici: ["20f", "20g", "22", "22a", "22b"] },
+          {
+            street: "Milesi",
+            civici: [
+              "2",
+              "1",
+              "3",
+              "4",
+              "4a",
+              "5",
+              "7",
+              "6",
+              "9",
+              "11",
+              "8",
+              "13",
+            ],
+          },
+          { street: "Gazzato", civici: ["1b", "1a", "1", "2", "4"] },
+          { street: "Salvator Rosa", civici: ["2", "4c", "6", "5", "3", "1"] },
+          {
+            street: "Gazzato",
+            civici: [
+              "3",
+              "5",
+              "2a",
+              "4a",
+              "4b",
+              "4c",
+              "4d",
+              "6",
+              "6a",
+              "7",
+              "9",
+              "6b",
+              "11",
+              "13",
+              "6c",
+              "15",
+              "17",
+              "8",
+              "8a",
+              "8b",
+              "21",
+              "23",
+              "8c",
+              "10",
+              "10a",
+              "25",
+              "25a",
+              "27",
+              "29",
+              "31",
+              "20",
+            ],
+          },
+          { street: "Veneziano", civici: ["2", "5"] },
+          {
+            street: "Ciardi",
+            civici: [
+              "58",
+              "60",
+              "62",
+              "64",
+              "66",
+              "53",
+              "51b",
+              "51a",
+              "51",
+              "49a",
+              "49",
+            ],
+          },
+          {
+            street: "Veneziano",
+            civici: [
+              "4",
+              "6",
+              "6a",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "30",
+              "32",
+              "15",
+              "13",
+            ],
+          },
+          {
+            street: "Diziani",
+            civici: [
+              "2",
+              "4",
+              "4a",
+              "6",
+              "8",
+              "10",
+              "10a",
+              "12",
+              "14",
+              "16",
+              "16a",
+              "18",
+              "20",
+              "22",
+              "24",
+              "19",
+              "17",
+              "15a",
+              "15",
+              "13",
+              "11",
+              "9b",
+              "9a",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1",
+            ],
+          },
+          {
+            street: "Magnasco",
+            civici: [
+              "35",
+              "44",
+              "33a",
+              "42",
+              "33",
+              "34a",
+              "31",
+              "29",
+              "27",
+              "40",
+              "25",
+              "38",
+              "23",
+              "21",
+              "19",
+              "17",
+              "15",
+              "36a",
+              "36",
+              "34",
+              "32",
+              "11b",
+              "11c",
+              "11d",
+              "11e",
+              "13",
+              "13a",
+              "11a",
+              "30",
+              "11",
+              "28",
+              "3",
+            ],
+          },
+          {
+            street: "Salvator Rosa",
+            civici: ["16", "18", "20", "22", "24", "13", "11"],
+          },
+          {
+            street: "Magnasco",
+            civici: [
+              "26",
+              "24a",
+              "1",
+              "24",
+              "22",
+              "20",
+              "18",
+              "16",
+              "12",
+              "10",
+              "6",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: [
+              "24h",
+              "24g",
+              "24f",
+              "24e",
+              "24d",
+              "24",
+              "22u",
+              "22t",
+              "22s",
+              "22r",
+              "22q",
+              "22p",
+              "22o",
+            ],
+          },
+          {
+            street: "Ciardi",
+            civici: [
+              "1",
+              "2",
+              "5",
+              "7",
+              "9",
+              "8",
+              "12",
+              "3",
+              "4",
+              "13",
+              "14",
+              "17",
+              "16",
+              "16a",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "24",
+              "24a",
+              "24b",
+              "26",
+              "23",
+              "25",
+              "28",
+              "30",
+              "32",
+              "34",
+              "36",
+              "38",
+              "40",
+              "42",
+              "44",
+              "46",
+              "48",
+              "48a",
+              "50",
+              "52",
+              "54",
+              "56",
+              "45a",
+              "45",
+              "43",
+              "41",
+              "39",
+              "33a",
+              "33",
+              "31",
+              "29",
+              "27",
+            ],
+          },
+          { street: "Salvator Rosa", civici: ["6a", "6b", "8", "10", "7"] },
+          {
+            street: "Pietra Vecchia",
+            civici: [
+              "13",
+              "10",
+              "8",
+              "11",
+              "9",
+              "7",
+              "6b",
+              "6a",
+              "5",
+              "6",
+              "3",
+              "4",
+              "2",
+            ],
+          },
+          {
+            street: "Castellana",
+            civici: ["22i", "22h", "22g", "22f", "22e", "22d", "22c"],
+          },
+        ],
+        "Zona 24A": [
+          {
+            street: "Via Terraglio",
+            civici: ["1", "1A", "3", "1B", "3A", "13", "22"],
+          },
+          {
+            street: "Via Olivolo",
+            civici: [
+              "9",
+              "7",
+              "5",
+              "3",
+              "1A",
+              "1",
+              "4",
+              "4A",
+              "6",
+              "6B",
+              "8",
+              "10",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+            ],
+          },
+          {
+            street: "Pzzale Giustiniani",
+            civici: [
+              "13",
+              "12",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "1",
+              "8A",
+              "4",
+              "5",
+              "7",
+              "8",
+              "10",
+              "11",
+            ],
+          },
+          {
+            street: "Via Santa Chiara",
+            civici: [
+              "11",
+              "7A",
+              "7B",
+              "7",
+              "5B",
+              "5A",
+              "5",
+              "3D",
+              "3A",
+              "3",
+              "4",
+            ],
+          },
+          {
+            street: "Via San Damiano",
+            civici: ["13", "11", "9", "10", "8", "7", "6", "4", "2A", "2"],
+          },
+          { street: "Via Bergamo", civici: ["12", "10", "B", "7", "5", "3"] },
+          {
+            street: "Via Bezzecca",
+            civici: ["2", "1", "3", "6", "8", "10", "7", "12", "14", "9"],
+          },
+          {
+            street: "Via Mentana",
+            civici: [
+              "4",
+              "5",
+              "6",
+              "8",
+              "5A",
+              "5B",
+              "7",
+              "9",
+              "11",
+              "20",
+              "20A",
+            ],
+          },
+          {
+            street: "Via San Fermo",
+            civici: [
+              "11",
+              "20",
+              "18",
+              "16",
+              "14",
+              "12",
+              "10",
+              "9",
+              "8",
+              "7A",
+              "6",
+              "7",
+              "5",
+              "3",
+              "2",
+              "4",
+            ],
+          },
+          {
+            street: "Via Peschiera",
+            civici: ["2", "3", "3A", "4", "6", "10", "5", "9", "7", "5", "12"],
+          },
+          {
+            street: "Via Villafranca",
+            civici: ["5", "12", "14", "10A", "10", "8", "6", "4", "3"],
+          },
+          {
+            street: "Via Goito",
+            civici: [
+              "2",
+              "1",
+              "3",
+              "5",
+              "7",
+              "9",
+              "11",
+              "8",
+              "13",
+              "12",
+              "16",
+              "20",
+              "22",
+            ],
+          },
+          {
+            street: "Via Ceccherini",
+            civici: ["11", "14", "21", "19", "13", "9"],
+          },
+          {
+            street: "Via Borgo Pezzana",
+            civici: [
+              "3",
+              "5",
+              "7",
+              "11",
+              "15",
+              "29",
+              "29A",
+              "33",
+              "35",
+              "37",
+              "39",
+              "41",
+              "43",
+              "45",
+              "47",
+              "49",
+              "51",
+              "53",
+              "57",
+              "59",
+              "61A",
+              "63A",
+              "63B",
+              "63C",
+              "63D",
+              "63G",
+              "63F",
+              "63E",
+              "63H",
+              "63I",
+              "73",
+              "75",
+              "4",
+            ],
+          },
+          {
+            street: "Via Amatore Sciesa",
+            civici: ["2", "4", "6", "8", "10", "12", "16", "18", "20"],
+          },
+          {
+            street: "Via Tito Speri",
+            civici: ["1", "3", "2", "4", "6", "8", "10", "12", "16", "20"],
+          },
+          {
+            street: "Via Fratelli Cairoli",
+            civici: [
+              "12",
+              "10",
+              "8",
+              "1",
+              "6E",
+              "6D",
+              "6C",
+              "6B",
+              "6A",
+              "6",
+              "4C",
+              "4D",
+              "4B",
+              "4A",
+              "4",
+              "2",
+            ],
+          },
+          {
+            street: "Via Grazioli",
+            civici: [
+              "2",
+              "1",
+              "3",
+              "4",
+              "6",
+              "3A",
+              "3B",
+              "5",
+              "8",
+              "10",
+              "11",
+              "12",
+              "14",
+              "17",
+              "15A",
+              "15",
+              "13",
+              "16",
+              "18",
+              "20",
+              "21",
+              "23",
+              "22",
+              "24",
+              "25",
+              "27",
+              "29",
+              "43",
+              "45",
+              "47",
+              "28",
+              "30",
+            ],
+          },
+          {
+            street: "Via Carlo Poma",
+            civici: [
+              "1",
+              "3",
+              "5",
+              "5A",
+              "5B",
+              "4",
+              "7",
+              "6",
+              "8",
+              "9",
+              "10",
+              "14",
+              "16",
+              "15",
+              "13",
+              "11",
+            ],
+          },
+          {
+            street: "Via Montanari",
+            civici: ["9", "14", "12", "7", "10", "8", "3", "6", "1", "2", "4"],
+          },
+          {
+            street: "Via Tazzoli",
+            civici: ["12", "14", "7", "10", "5", "6", "4", "2", "1"],
+          },
+          { street: "Via Bacchion Eugenio", civici: ["1"] },
+          { street: "Via Cesco Baseggio", civici: ["7", "9"] },
+          {
+            street: "Via Pionara",
+            civici: [
+              "1",
+              "5",
+              "2",
+              "2A",
+              "2B",
+              "5A",
+              "7",
+              "9",
+              "11",
+              "13",
+              "15",
+              "17",
+              "6",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+            ],
+          },
+          {
+            street: "Via Don Tosatto",
+            civici: [
+              "24",
+              "26",
+              "6",
+              "8",
+              "53A",
+              "57",
+              "59",
+              "127",
+              "3",
+              "147A",
+              "28",
+            ],
+          },
+          { street: "Via G. Bella", civici: ["3"] },
+          { street: "Via Caravaggio", civici: ["23A", "27", "29", "33"] },
+          { street: "Via Iotti Nilde", civici: ["7", "4"] },
+          { street: "Via Saragat", civici: ["1", "6", "B"] },
+          {
+            street: "Via Don Peron",
+            civici: ["4", "6A", "6B", "6C", "6D", "6E", "12", "18", "20", "1A"],
+          },
+          {
+            street: "Via Zandonai Riccardo",
+            civici: ["6", "8", "10", "12", "5A"],
+          },
+          {
+            street: "Via Peppino Impastato",
+            civici: [
+              "2",
+              "4",
+              "6",
+              "8",
+              "10",
+              "30",
+              "30A",
+              "32",
+              "32A",
+              "32B",
+              "34",
+              "22",
+              "24",
+              "26",
+              "28",
+              "14",
+              "12",
+            ],
+          },
+        ],
+        "Zona 24B": [
+          {
+            street: "Via Torre Belfredo",
+            civici: [
+              "120B",
+              "120C",
+              "122",
+              "122E",
+              "122D",
+              "122C",
+              "122B",
+              "122A",
+              "124A",
+              "124C",
+              "124D",
+              "126",
+              "126A",
+              "77",
+              "79",
+              "81A",
+              "81B",
+              "81C",
+              "81D",
+              "81E",
+              "83",
+              "85",
+              "85A",
+              "85B",
+              "87",
+              "87B",
+              "89",
+              "89A",
+              "91",
+              "91A",
+              "93",
+              "95",
+              "97",
+              "99",
+              "101",
+              "103",
+              "105",
+              "107",
+              "109",
+              "115",
+              "121",
+              "123",
+              "125",
+              "130A",
+              "132",
+              "134",
+              "140",
+              "142",
+              "144",
+              "146",
+              "148",
+              "150",
+              "128",
+              "128A",
+              "128B",
+              "128C",
+              "130",
+            ],
+          },
+          {
+            street: "Via Filiasi",
+            civici: [
+              "127",
+              "125",
+              "123",
+              "121",
+              "119",
+              "117",
+              "115",
+              "113",
+              "111",
+              "109",
+              "107",
+              "105",
+              "103",
+              "99",
+              "97",
+              "95",
+              "93/91",
+              "77",
+              "75",
+              "19",
+              "21",
+              "23",
+              "25",
+              "27",
+              "29",
+              "49",
+              "51",
+              "53",
+              "55",
+              "57",
+              "59",
+              "61",
+              "63",
+              "65",
+              "34",
+              "36",
+              "38",
+              "40",
+              "42",
+              "44",
+              "46",
+              "46B",
+              "48",
+              "50",
+              "58",
+              "60",
+              "64",
+              "2",
+              "4",
+              "6",
+              "118",
+              "120",
+            ],
+          },
+          { street: "Via R Giuliani", civici: ["13", "11", "7", "5"] },
+          {
+            street: "Castelvecchio",
+            civici: ["2", "4", "6", "8", "10", "1A", "1"],
+          },
+          {
+            street: "Via Terraglio",
+            civici: [
+              "6",
+              "6A",
+              "8",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "22",
+              "24",
+              "26",
+              "28",
+              "30",
+              "32",
+              "32A",
+              "34",
+              "34A",
+              "34ABC",
+              "36",
+              "36D",
+              "36A",
+              "36B",
+              "36C",
+            ],
+          },
+          {
+            street: "Via Bruno NAO",
+            civici: [
+              "2",
+              "1",
+              "4",
+              "6",
+              "5",
+              "7",
+              "8",
+              "8A",
+              "10",
+              "14",
+              "16",
+              "18",
+              "20",
+              "20A",
+              "9",
+              "9A",
+              "11",
+              "13",
+              "15",
+              "17",
+              "19",
+              "21",
+              "24",
+              "26",
+              "28",
+              "32",
+              "31",
+              "29",
+              "27",
+              "25",
+              "23",
+            ],
+          },
+          {
+            street: "Via E Marcon",
+            civici: [
+              "12",
+              "12A",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "30",
+              "27",
+              "25",
+              "23",
+              "21",
+              "19",
+              "17",
+              "15A",
+              "15",
+              "13",
+              "11",
+              "9A",
+              "9",
+              "7",
+              "5",
+              "3",
+              "1B",
+              "1A",
+              "1",
+              "4",
+              "6",
+              "8",
+              "10",
+            ],
+          },
+          {
+            street: "Via Camuffo",
+            civici: [
+              "28",
+              "28A",
+              "30",
+              "32",
+              "34",
+              "36",
+              "38",
+              "40",
+              "40A",
+              "42",
+              "44",
+              "46",
+              "48",
+              "50",
+              "50A",
+              "52",
+              "54",
+              "54A",
+              "56",
+              "58",
+              "60",
+              "62",
+              "23",
+              "21",
+              "17",
+              "15",
+              "13",
+              "26F",
+              "26A/H",
+              "7",
+              "5",
+              "1",
+              "10",
+              "18",
+              "20",
+              "22",
+              "24",
+              "26",
+              "6",
+              "4A",
+              "4",
+              "2",
+            ],
+          },
+          {
+            street: "Via Pastrengo",
+            civici: [
+              "2A",
+              "4",
+              "6",
+              "8",
+              "12",
+              "14",
+              "16",
+              "18",
+              "18A",
+              "20",
+              "22",
+              "24",
+              "26",
+              "28",
+              "30",
+              "34",
+              "36",
+              "36A",
+              "38",
+              "40",
+              "21",
+              "19",
+              "15",
+              "13",
+              "11",
+              "9",
+              "7",
+              "5",
+              "3A",
+              "1",
+            ],
+          },
+          {
+            street: "Via Aspromonte",
+            civici: ["3", "5", "7", "9", "9A", "11", "4", "21", "23"],
+          },
+          { street: "Via Teano", civici: ["2", "4", "6", "8", "5", "3", "1"] },
+          { street: "Via Calatafimi", civici: ["1", "1A", "3"] },
+          { street: "Via Calafafimi", civici: ["7"] },
+          { street: "Via Gaeta", civici: ["14", "12", "10A", "8", "9"] },
+        ],
+      };
+
+      const routeFlat = {};
+      const routeMaxIndex = {};
+
+      // AGGIUNTO: Mappa globale di tutte le strade per la ricerca OCR
+      let tutteLeStradeMaster = [];
+
+      function inizializzaMotoreRicerca() {
+        for (let zona in masterRoute) {
+          routeFlat[zona] = [];
+          routeMaxIndex[zona] = {};
+
+          let indexCounter = 0;
+          masterRoute[zona].forEach((blocco) => {
+            let stradaUpper = blocco.street.toUpperCase();
+
+            // Popoliamo l'array globale per l'OCR (rimuovendo 'VIA ' per flessibilità)
+            let nomePuro = stradaUpper.replace(/^VIA\s+/, "");
+            if (!tutteLeStradeMaster.some((s) => s.puro === nomePuro)) {
+              tutteLeStradeMaster.push({
+                zona: zona,
+                originale: stradaUpper,
+                puro: nomePuro,
+              });
+            }
+
+            blocco.civici.forEach((civ) => {
+              let civicoUpper = String(civ).toUpperCase();
+              routeFlat[zona].push({
+                strada: stradaUpper,
+                civico: civicoUpper,
+                ordineId: indexCounter,
+              });
+              routeMaxIndex[zona][stradaUpper] = indexCounter;
+              indexCounter += 10;
+            });
+          });
+        }
+      }
+
+      let consegne = [];
+
+      window.onload = () => {
+        inizializzaMotoreRicerca();
+        caricaDatiLocali();
+
+        let zonaSalvata = localStorage.getItem("zonaSelezionata");
+        if (!zonaSalvata || !masterRoute[zonaSalvata]) {
+          zonaSalvata = Object.keys(masterRoute)[0];
+        }
+
+        document.getElementById("zona").value = zonaSalvata;
+        document.getElementById("header-zona-text").innerText = zonaSalvata;
+        aggiornaStrade();
+        renderLista();
+      };
+
+      function apriMenu() {
+        document.getElementById("sidebarOverlay").classList.remove("hidden");
+        setTimeout(
+          () =>
+            document
+              .getElementById("sidebarOverlay")
+              .classList.remove("opacity-0"),
+          10,
+        );
+        document
+          .getElementById("sidebar")
+          .classList.remove("-translate-x-full");
+      }
+
+      function chiudiMenu() {
+        document.getElementById("sidebar").classList.add("-translate-x-full");
+        document.getElementById("sidebarOverlay").classList.add("opacity-0");
+        setTimeout(
+          () =>
+            document.getElementById("sidebarOverlay").classList.add("hidden"),
+          300,
+        );
+      }
+
+      function cambioZona() {
+        const zonaSelezionata = document.getElementById("zona").value;
+        localStorage.setItem("zonaSelezionata", zonaSelezionata);
+        document.getElementById("header-zona-text").innerText = zonaSelezionata;
+        aggiornaStrade();
+        renderLista();
+        chiudiMenu();
+      }
+
+      function aggiornaStrade() {
+        const zona = document.getElementById("zona").value;
+        const selectStrada = document.getElementById("strada");
+
+        if (!masterRoute[zona]) {
+          selectStrada.innerHTML =
+            '<option value="">Errore: zona non trovata</option>';
+          return;
+        }
+
+        const stradeUniche = [
+          ...new Set(masterRoute[zona].map((b) => b.street)),
+        ];
+        stradeUniche.sort((a, b) => a.localeCompare(b));
+
+        selectStrada.innerHTML = "";
+        stradeUniche.forEach((strada) => {
+          selectStrada.innerHTML += `<option value="${strada.toUpperCase()}">${strada}</option>`;
+        });
+      }
+
+      // Funzione originale rinominata per chiarezza, richiama la nuova logica base
+      function aggiungiPaccoDaForm() {
+        const zona = document.getElementById("zona").value;
+        const strada = document.getElementById("strada").value;
+        const civico = document
+          .getElementById("civico")
+          .value.trim()
+          .toUpperCase();
+        const pezzi = parseInt(document.getElementById("pezzi").value);
+
+        if (!civico) return mostraAlert("Devi inserire un numero civico.");
+        if (isNaN(pezzi) || pezzi < 1) return mostraAlert("Pezzi non validi.");
+
+        aggiungiPacco(zona, strada, civico, pezzi);
+
+        document.getElementById("civico").value = "";
+        document.getElementById("pezzi").value = "1";
+        document.getElementById("civico").focus();
+      }
+
+      // Funzione nucleo separata in modo che possa essere usata sia dal Form che dallo Scanner
+      function aggiungiPacco(zona, strada, civico, pezzi) {
+        const indiceEsistente = consegne.findIndex(
+          (c) => c.zona === zona && c.strada === strada && c.civico === civico,
+        );
+
+        if (indiceEsistente !== -1) {
+          consegne[indiceEsistente].pezzi += pezzi;
+        } else {
+          const foundMaster = routeFlat[zona].find(
+            (item) => item.strada === strada && item.civico === civico,
+          );
+
+          let ordineId = 0;
+          let fuoriRotta = false;
+
+          if (foundMaster) {
+            ordineId = foundMaster.ordineId;
+          } else {
+            fuoriRotta = true;
+            ordineId = (routeMaxIndex[zona][strada] || 999000) + 1;
+            ordineId += (Date.now() % 1000) / 1000;
+          }
+
+          consegne.push({
+            id: Date.now(),
+            zona: zona,
+            strada: strada,
+            civico: civico,
+            pezzi: pezzi,
+            ordineId: ordineId,
+            fuoriRotta: fuoriRotta,
+          });
+        }
+
+        salvaDatiLocali();
+        renderLista();
+      }
+
+      function renderLista() {
+        const container = document.getElementById("lista-consegne");
+        const contatoreUI = document.getElementById("contatore-totale");
+        const zonaAttuale = document.getElementById("zona").value;
+
+        const consegneZona = consegne.filter((c) => c.zona === zonaAttuale);
+
+        if (consegneZona.length === 0) {
+          container.innerHTML =
+            '<div class="text-center text-slate-400 py-8 text-sm italic">Nessun pacco inserito.<br>Inizia ad aggiungere civici!</div>';
+          contatoreUI.innerText = "0 pacchi totali";
+          return;
+        }
+
+        container.innerHTML = "";
+        let totalePacchi = 0;
+
+        consegneZona.sort((a, b) => a.ordineId - b.ordineId);
+
+        consegneZona.forEach((c) => {
+          totalePacchi += c.pezzi;
+
+          const bgClass = c.fuoriRotta
+            ? "bg-red-50 border-red-200"
+            : "bg-white border-slate-100";
+          const textStrada = c.fuoriRotta ? "text-red-500" : "text-blue-600";
+          const textCivico = c.fuoriRotta ? "text-red-700" : "text-slate-800";
+          const warningBadge = c.fuoriRotta
+            ? `<span class="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ml-2">Fuori Lista</span>`
+            : "";
+
+          container.innerHTML += `
+            <div class="${bgClass} p-4 rounded-xl shadow-sm border flex justify-between items-center transform transition active:scale-[0.98]">
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold ${textStrada} mb-0.5">${c.strada}</span>
+                    <div class="flex items-center">
+                        <span class="text-xl font-black ${textCivico}">Civ. ${c.civico}</span>
+                        ${warningBadge}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-slate-200">
+                        <span class="text-lg">📦</span>
+                        <span class="font-extrabold text-lg text-slate-700">${c.pezzi}</span>
+                    </div>
+                    <button onclick="rimuoviPacco(${c.id})" class="text-slate-300 hover:text-red-600 p-2 rounded-full hover:bg-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+          `;
+        });
+
+        contatoreUI.innerText = `${totalePacchi} pacchi`;
+      }
+
+      // ==========================================
+      // AGGIUNTO: LOGICA SCANNER CON TESSERACT.JS
+      // ==========================================
+      let cameraStream = null;
+      let datiScannerTemp = null; // Salva temporaneamente zona, strada e civico trovati
+
+      async function apriScanner() {
+        chiudiMenu();
+        const modal = document.getElementById("cameraModal");
+        modal.classList.remove("hidden");
+        setTimeout(() => modal.classList.remove("opacity-0"), 10);
+
+        document
+          .getElementById("scannerResultUI")
+          .classList.add("translate-y-full");
+        document.getElementById("cameraControls").classList.remove("hidden");
+
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }, // Richiede fotocamera posteriore
+          });
+          document.getElementById("videoStream").srcObject = cameraStream;
+        } catch (err) {
+          chiudiScanner();
+          mostraAlert(
+            "Errore fotocamera: " +
+              err.message +
+              ". Assicurati di aver dato i permessi a Safari.",
+          );
+        }
+      }
+
+      function chiudiScanner() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+          cameraStream = null;
+        }
+        const modal = document.getElementById("cameraModal");
+        modal.classList.add("opacity-0");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      }
+
+      async function scattaFoto() {
+        const video = document.getElementById("videoStream");
+        const canvas = document.getElementById("canvasCapture");
+        const overlay = document.getElementById("scannerLoading");
+
+        // Imposta le dimensioni del canvas uguali al video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Ferma il video per mostrare l'immagine catturata
+        video.pause();
+
+        // Mostra overlay di caricamento
+        overlay.classList.remove("hidden");
+        document.getElementById("cameraControls").classList.add("hidden");
+
+        try {
+          // Esegui OCR tramite Tesseract
+          // Nota: Al primo avvio scaricherà i pacchetti lingua, potrebbe impiegare qualche secondo
+          const result = await Tesseract.recognize(
+            canvas,
+            "ita", // lingua italiana
+            { logger: (m) => console.log(m) }, // opzionale: mostra progresso in console
+          );
+
+          analizzaTestoScanner(result.data.text);
+        } catch (err) {
+          console.error(err);
+          mostraAlert("Errore durante la lettura del testo.");
+          riprovaScansione();
+        } finally {
+          overlay.classList.add("hidden");
+        }
+      }
+
+      function analizzaTestoScanner(testo) {
+        let testoPulito = testo.toUpperCase();
+        let righe = testoPulito.split("\n");
+
+        let stradaTrovata = null;
+        let zonaTrovata = null;
+        let civicoTrovato = null;
+
+        // 1. Cerchiamo se una delle nostre strade esiste nel testo
+        for (let riga of righe) {
+          // Puliamo un po' la riga da simboli strani generati dall'OCR
+          let rigaSemplice = riga.replace(/[^A-Z0-9\s]/g, " ");
+
+          for (let s of tutteLeStradeMaster) {
+            // Cerchiamo la parola esatta della via (es. "BUZZOLA")
+            const regexVia = new RegExp(`\\b${s.puro}\\b`);
+
+            if (regexVia.test(rigaSemplice)) {
+              stradaTrovata = s.originale; // La via come salvata in array (es. "Via Antonio Buzzola")
+              zonaTrovata = s.zona;
+
+              // 2. Estrazione civico: Troviamo il numero dopo il nome della via
+              // Dividiamo la stringa dove si trova il nome della via
+              let parteDopoVia = rigaSemplice.substring(
+                rigaSemplice.search(regexVia) + s.puro.length,
+              );
+              // Cerca il primo gruppo di numeri, seguito opzionalmente da una singola lettera (es. 2C, 114A)
+              let matchCivico = parteDopoVia.match(/\b(\d+[A-Z]?)\b/);
+
+              if (matchCivico) {
+                civicoTrovato = matchCivico[1];
+              }
+              break;
+            }
+          }
+          if (stradaTrovata) break;
+        }
+
+        // Mostra la UI dei risultati
+        const resultUI = document.getElementById("scannerResultUI");
+        const btnAdd = document.getElementById("btnAggiungiScanner");
+
+        if (stradaTrovata && civicoTrovato) {
+          datiScannerTemp = {
+            zona: zonaTrovata,
+            strada: stradaTrovata,
+            civico: civicoTrovato,
+            pezzi: 1,
+          };
+
+          document.getElementById("scannedZona").innerText =
+            zonaTrovata.toUpperCase();
+          document.getElementById("scannedZona").className =
+            "text-green-600 font-extrabold text-sm mb-1";
+          document.getElementById("scannedAddress").innerText =
+            `${stradaTrovata} - Civ. ${civicoTrovato}`;
+
+          btnAdd.disabled = false;
+          btnAdd.classList.remove("opacity-50");
+        } else {
+          datiScannerTemp = null;
+          document.getElementById("scannedZona").innerText =
+            "INDIRIZZO NON RICONOSCIUTO";
+          document.getElementById("scannedZona").className =
+            "text-red-600 font-extrabold text-sm mb-1";
+          document.getElementById("scannedAddress").innerText =
+            "Riprova o inserisci a mano";
+
+          btnAdd.disabled = true;
+          btnAdd.classList.add("opacity-50");
+        }
+
+        resultUI.classList.remove("translate-y-full");
+      }
+
+      function riprovaScansione() {
+        datiScannerTemp = null;
+        document
+          .getElementById("scannerResultUI")
+          .classList.add("translate-y-full");
+        document.getElementById("cameraControls").classList.remove("hidden");
+        document.getElementById("videoStream").play();
+      }
+
+      function confermaAggiuntaScanner() {
+        if (datiScannerTemp) {
+          // Cambia l'app alla zona corrispondente
+          document.getElementById("zona").value = datiScannerTemp.zona;
+          cambioZona(); // Questo aggiorna anche l'interfaccia header e select
+
+          // Aggiungi il pacco (imposta di default 1 pezzo)
+          aggiungiPacco(
+            datiScannerTemp.zona,
+            datiScannerTemp.strada,
+            datiScannerTemp.civico,
+            1,
+          );
+
+          // Chiudi tutto
+          chiudiScanner();
+        }
+      }
+      // ==========================================
+
+      function generaImmagineWatch() {
+        const zonaAttuale = document.getElementById("zona").value;
+        const consegneZona = consegne.filter((c) => c.zona === zonaAttuale);
+
+        if (consegneZona.length === 0)
+          return mostraAlert("Lista vuota per questa zona!");
+
+        const scale = 2;
+        const width = 400 * scale;
+        const marginX = 20 * scale;
+        const lineHeightHeader = 40 * scale;
+        const lineHeightData = 35 * scale;
+        const wrapWidth = width - marginX * 2;
+
+        const sortedConsegne = [...consegneZona].sort(
+          (a, b) => a.ordineId - b.ordineId,
+        );
+        const canvasBlocks = [];
+        let currentBlock = null;
+
+        sortedConsegne.forEach((c) => {
+          if (!currentBlock || currentBlock.strada !== c.strada) {
+            if (currentBlock) canvasBlocks.push(currentBlock);
+            currentBlock = { strada: c.strada, items: [] };
+          }
+          currentBlock.items.push(c);
+        });
+        if (currentBlock) canvasBlocks.push(currentBlock);
+
+        const ctxDummy = document.createElement("canvas").getContext("2d");
+        ctxDummy.font = `bold ${32 * scale}px -apple-system, system-ui, sans-serif`;
+
+        let simY = 60 * scale + lineHeightHeader + 20 * scale;
+
+        for (const block of canvasBlocks) {
+          simY += lineHeightData;
+          let cursorX = marginX;
+          for (let i = 0; i < block.items.length; i++) {
+            const item = block.items[i];
+            let text = item.civico + (item.pezzi > 1 ? `(${item.pezzi})` : "");
+            let testText = text + (i < block.items.length - 1 ? ", " : "");
+
+            let metrics = ctxDummy.measureText(testText);
+            if (
+              cursorX + metrics.width > marginX + wrapWidth &&
+              cursorX > marginX
+            ) {
+              cursorX = marginX;
+              simY += lineHeightData;
+            }
+            cursorX += metrics.width;
+          }
+          simY += lineHeightData + 15 * scale;
+        }
+
+        const height = Math.max(500 * scale, simY);
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, width, height);
+
+        let y = 60 * scale;
+        const oggi = new Date();
+        const dataStr = oggi.toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "short",
+        });
+
+        ctx.fillStyle = "#3b82f6";
+        ctx.font = `bold ${30 * scale}px -apple-system, system-ui, sans-serif`;
+        ctx.fillText(
+          `${document.getElementById("zona").value.toUpperCase()} - ${dataStr.toUpperCase()}`,
+          marginX,
+          y,
+        );
+        y += lineHeightHeader + 15 * scale;
+
+        for (const block of canvasBlocks) {
+          ctx.fillStyle = "#4ade80";
+          ctx.font = `bold ${28 * scale}px -apple-system, system-ui, sans-serif`;
+          ctx.fillText(block.strada.toUpperCase(), marginX, y);
+          y += lineHeightData;
+
+          ctx.font = `bold ${32 * scale}px -apple-system, system-ui, sans-serif`;
+
+          let cursorX = marginX;
+          for (let i = 0; i < block.items.length; i++) {
+            const item = block.items[i];
+            let text = item.civico + (item.pezzi > 1 ? `(${item.pezzi})` : "");
+            let isLast = i === block.items.length - 1;
+            let textToDraw = text + (isLast ? "" : ", ");
+
+            ctx.fillStyle = item.fuoriRotta ? "#ef4444" : "#ffffff";
+
+            let metrics = ctx.measureText(textToDraw);
+            if (
+              cursorX + metrics.width > marginX + wrapWidth &&
+              cursorX > marginX
+            ) {
+              cursorX = marginX;
+              y += lineHeightData;
+            }
+
+            ctx.fillText(textToDraw, cursorX, y);
+            cursorX += metrics.width;
+          }
+          y += lineHeightData + 15 * scale;
+        }
+
+        document.getElementById("watchResultImg").src = canvas.toDataURL(
+          "image/jpeg",
+          0.9,
+        );
+
+        document.getElementById("watchModal").classList.remove("hidden");
+        setTimeout(
+          () =>
+            document.getElementById("watchModal").classList.remove("opacity-0"),
+          10,
+        );
+      }
+
+      function rimuoviPacco(id) {
+        consegne = consegne.filter((c) => c.id !== id);
+        salvaDatiLocali();
+        renderLista();
+      }
+
+      function pulisciLista() {
+        chiudiMenu();
+        setTimeout(() => {
+          const btn = document.querySelector("#alertBox button");
+          const oldOnclick = btn.onclick;
+
+          document.getElementById("alertMessage").innerText =
+            "Vuoi azzerare tutte le consegne di oggi per QUESTA ZONA?";
+          btn.innerText = "Sì, CANCELLA TUTTO";
+          btn.className =
+            "w-full bg-red-600 text-white font-bold py-3 rounded-xl mb-2";
+
+          const cancelBtn = document.createElement("button");
+          cancelBtn.innerText = "Annulla";
+          cancelBtn.className =
+            "w-full bg-slate-200 text-slate-800 font-bold py-3 rounded-xl";
+          cancelBtn.id = "tempCancelBtn";
+          cancelBtn.onclick = () => resetAlertModal(oldOnclick);
+
+          document.getElementById("alertBox").appendChild(cancelBtn);
+
+          btn.onclick = () => {
+            const zonaAttuale = document.getElementById("zona").value;
+            consegne = consegne.filter((c) => c.zona !== zonaAttuale);
+            salvaDatiLocali();
+            renderLista();
+            resetAlertModal(oldOnclick);
+          };
+
+          document.getElementById("alertModal").classList.remove("hidden");
+          setTimeout(() => {
+            document.getElementById("alertModal").classList.remove("opacity-0");
+            document.getElementById("alertBox").classList.remove("scale-95");
+          }, 10);
+        }, 300);
+      }
+
+      function salvaDatiLocali() {
+        localStorage.setItem("consegneData2", JSON.stringify(consegne));
+      }
+
+      function caricaDatiLocali() {
+        const dati = localStorage.getItem("consegneData2");
+        if (dati) {
+          consegne = JSON.parse(dati);
+          consegne.forEach((c) => {
+            if (!c.zona) c.zona = "Zona A";
+          });
+        }
+      }
+
+      function mostraAlert(msg) {
+        document.getElementById("alertMessage").innerText = msg;
+        document.getElementById("alertModal").classList.remove("hidden");
+        setTimeout(() => {
+          document.getElementById("alertModal").classList.remove("opacity-0");
+          document.getElementById("alertBox").classList.remove("scale-95");
+        }, 10);
+      }
+
+      function chiudiAlert() {
+        document.getElementById("alertModal").classList.add("opacity-0");
+        document.getElementById("alertBox").classList.add("scale-95");
+        setTimeout(
+          () => document.getElementById("alertModal").classList.add("hidden"),
+          300,
+        );
+      }
+
+      function chiudiWatchModal() {
+        document.getElementById("watchModal").classList.add("opacity-0");
+        setTimeout(
+          () => document.getElementById("watchModal").classList.add("hidden"),
+          300,
+        );
+      }
+
+      function resetAlertModal(oldOnclick) {
+        chiudiAlert();
+        setTimeout(() => {
+          const btn = document.querySelector("#alertBox button");
+          btn.innerText = "Ho capito";
+          btn.className =
+            "w-full bg-slate-900 text-white font-bold py-3 rounded-xl";
+          btn.onclick = oldOnclick;
+          const tempBtn = document.getElementById("tempCancelBtn");
+          if (tempBtn) tempBtn.remove();
+        }, 300);
+      }
+    </script>
+  </body>
+</html>
